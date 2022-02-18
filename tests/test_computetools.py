@@ -32,7 +32,7 @@ def test_push_with_no_fields():
     clock = input_data["Clock"]
     N = 10
     x_final = v_i * N * clock["dt"]
-    for i in range(N):
+    for _ in range(N):
         push_example.push(x_i, p_i, charge, mass, E, B)
     assert np.allclose(x_i, x_final)
 
@@ -54,7 +54,7 @@ def test_push_with_crossed_fields():
     p_i = np.array([[0, 0, 0.0]], dtype=np.float)
     E = np.array([[10, 0, 0]], dtype=np.float)
     B = np.array([[0, 0, 10]], dtype=np.float)
-    for i in range(N):
+    for _ in range(N):
         push_example.push(x_i, p_i, charge, mass, E, B)
     x_final = np.array([[2.20028479e-09, -1.04482737e-08, 0]])
     assert np.allclose(x_i, x_final)

@@ -32,8 +32,7 @@ def field_fixt_csv(tmp_path):
     sim.read_diagnostics_from_input()
     sim.read_clock_from_input()
     sim.read_grid_from_input()
-    field = sim.diagnostics[0]
-    return field
+    return sim.diagnostics[0]
 
 
 @pytest.fixture(name='simple_field_npy')
@@ -61,8 +60,7 @@ def field_fixt_npy(tmp_path):
     sim.read_diagnostics_from_input()
     sim.read_clock_from_input()
     sim.read_grid_from_input()
-    field = sim.diagnostics[0]
-    return field
+    return sim.diagnostics[0]
 
 # Test methods for FieldDiagnostic class with csv file
 def test_init_should_create_class_instance_when_called(simple_field_csv):

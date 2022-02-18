@@ -150,9 +150,8 @@ class FiniteDifference(ComputeTool):
         g = 1/(2.0 * self.dr)
         col_below = np.zeros(N) - g
         col_above = np.zeros(N) + g
-        D = sparse.dia_matrix(([col_below, col_above], [-1, 1]),
+        return sparse.dia_matrix(([col_below, col_above], [-1, 1]),
                               shape=(N, N))
-        return D
 
     def radial_curl(self):
         """Finite difference matrix for (rf)'/r = (1/r)(d/dr)(rf)
@@ -181,10 +180,8 @@ class FiniteDifference(ComputeTool):
         # for col_below, the last element is dropped
         col_diag[-1] = 1.0 / self.dr
         col_below[-2] = 2.0 * col_below[-1]
-        # set main columns for finite difference derivative
-        D = sparse.dia_matrix(([col_below, col_diag, col_above],
+        return sparse.dia_matrix(([col_below, col_diag, col_above],
                                [-1, 0, 1]), shape=(N, N))
-        return D
     
     def del2_radial(self):
         """Finite difference matrix for (1/r)(d/dr)(r (df/dr))
@@ -198,29 +195,27 @@ class FiniteDifference(ComputeTool):
         g1 = 1/(2.0 * self.dr)
         col_below = -g1 * np.ones(N)
         col_above = g1 * np.ones(N)
-        
+
         col_above[1:] = col_above[1:] / self._owner.grid.r[:-1]
         col_below[:-1] = col_below[:-1] / self._owner.grid.r[1:]
-        
+
         # BC at r=0
         col_above[1] = 0
-        
+
         D1 = sparse.dia_matrix(([col_below, col_above], [-1, 1]),
                                shape=(N, N))
-        
+
         g2 = 1/(self.dr**2)
         col_below = g2 * np.ones(N)
         col_diag = g2 * np.ones(N)
         col_above = g2 * np.ones(N)
-        
+
         # BC at r=0, first row of D
-        col_above[1] = 2 * col_above[1]
+        col_above[1] *= 2
         D2 = sparse.dia_matrix(([col_below, -2*col_diag, col_above],
                                 [-1, 0, 1]), shape=(N, N))
-        
-        # Need to set boundary conditions!
-        D = D1 + D2
-        return D
+
+        return D1 + D2
     
     def del2(self):
         """Finite difference matrix for d2/dx2
@@ -231,17 +226,16 @@ class FiniteDifference(ComputeTool):
             Matrix which implements a finite difference approximation
             to (d/dx)(df/dx)"""
         N = self._owner.grid.num_points
-        
+
         g2 = 1/(self.dr**2)
         col_below = g2 * np.ones(N)
         col_diag = g2 * np.ones(N)
         col_above = g2 * np.ones(N)
-        
+
         # BC at r=0, first row of D
         col_above[1] = 2 * col_above[1]
-        D2 = sparse.dia_matrix(([col_below, -2*col_diag, col_above],
+        return sparse.dia_matrix(([col_below, -2*col_diag, col_above],
                                 [-1, 0, 1]), shape=(N, N))
-        return D2
 
     def ddr(self):
         """Finite difference matrix for (d/dr) f
@@ -258,9 +252,8 @@ class FiniteDifference(ComputeTool):
         col_above = g1 * np.ones(N)
         # BC at r=0
         col_above[1] = 0
-        D1 = sparse.dia_matrix(([col_below, col_above], [-1, 1]),
+        return sparse.dia_matrix(([col_below, col_above], [-1, 1]),
                                shape=(N, N))
-        return D1
 
     def BC_left_extrap(self):
         """Sparse matrix to extrapolate solution at left boundary
@@ -276,15 +269,14 @@ class FiniteDifference(ComputeTool):
         col_diag = np.ones(N)
         col_above = np.zeros(N)
         col_above2 = np.zeros(N)
-        
+
         # for col_above, the first element is dropped
         col_diag[0] = 0
         col_above[1] = 2
         col_above2[2] = -1
 
-        BC = sparse.dia_matrix(([col_diag, col_above, col_above2],
+        return sparse.dia_matrix(([col_diag, col_above, col_above2],
                                 [0, 1, 2]), shape=(N, N))
-        return BC
 
     def BC_left_avg(self):
         """Sparse matrix to set average solution at left boundary
@@ -299,15 +291,14 @@ class FiniteDifference(ComputeTool):
         col_diag = np.ones(N)
         col_above = np.zeros(N)
         col_above2 = np.zeros(N)
-        
+
         # for col_above, the first element is dropped
         col_diag[0] = 0
         col_above[1] = 1.5
         col_above2[2] = -0.5
 
-        BC = sparse.dia_matrix(([col_diag, col_above, col_above2],
-                                [0, 1, 2]), shape=(N, N))
-        return BC        
+        return sparse.dia_matrix(([col_diag, col_above, col_above2],
+                                [0, 1, 2]), shape=(N, N))        
 
     def BC_left_quad(self):
         """Sparse matrix for quadratic extrapolation at left boundary
@@ -324,16 +315,15 @@ class FiniteDifference(ComputeTool):
         col_diag = np.ones(N)
         col_above = np.zeros(N)
         col_above2 = np.zeros(N)
-        
+
         R2 = (r[1]**2 + r[2]**2)/(r[2]**2 - r[1]**2)/2
         # for col_above, the first element is dropped
         col_diag[0] = 0
         col_above[1] = 0.5 + R2
         col_above2[2] = 0.5 - R2
 
-        BC = sparse.dia_matrix(([col_diag, col_above, col_above2],
+        return sparse.dia_matrix(([col_diag, col_above, col_above2],
                                 [0, 1, 2]), shape=(N, N))
-        return BC
     
     def BC_left_flat(self):
         """Sparse matrix to set Neumann condition at left boundary
@@ -352,9 +342,8 @@ class FiniteDifference(ComputeTool):
         col_diag[0] = 0
         col_above[1] = 1
 
-        BC = sparse.dia_matrix(([col_diag, col_above], [0, 1]),
-                               shape=(N, N))
-        return BC        
+        return sparse.dia_matrix(([col_diag, col_above], [0, 1]),
+                               shape=(N, N))        
     
     def BC_right_extrap(self):
         """Sparse matrix to extrapolate solution at right boundary
@@ -370,15 +359,14 @@ class FiniteDifference(ComputeTool):
         col_diag = np.ones(N)
         col_below = np.zeros(N)
         col_below2 = np.zeros(N)
-        
+
         # for col_below, the last element is dropped
         col_diag[-1] = 0
         col_below[-2] = 2
         col_below2[-3] = -1
 
-        BC_right = sparse.dia_matrix(([col_below2, col_below, col_diag],
+        return sparse.dia_matrix(([col_below2, col_below, col_diag],
                                       [-2, -1, 0]), shape=(N, N))
-        return BC_right
 
 
 class BorisPush(ComputeTool):
@@ -477,8 +465,7 @@ class Interpolators(ComputeTool):
             Function which interpolates y(x) given grid `x` and
             values `y` on the grid.
         """
-        f = interpolate.interp1d(x, y, kind)
-        return f
+        return interpolate.interp1d(x, y, kind)
 
 
 ComputeTool.register("BorisPush", BorisPush)

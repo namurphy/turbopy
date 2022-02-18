@@ -247,40 +247,41 @@ class Simulation:
 
     def read_diagnostics_from_input(self):
         """Construct :class:`Diagnostic` instances based on input"""
-        if "Diagnostics" in self.input_data:
-            # This dictionary has two types of keys:
-            #    keys that are valid diagnostic types
-            #    other keys, which should be passed along
-            #    as "default" parameters
-            diags = {k: v for k, v in
-                     self.input_data["Diagnostics"].items()
-                     if Diagnostic.is_valid_name(k)}
-            params = {k: v for k, v in
-                      self.input_data["Diagnostics"].items()
-                      if not Diagnostic.is_valid_name(k)}
+        if "Diagnostics" not in self.input_data:
+            return
+        # This dictionary has two types of keys:
+        #    keys that are valid diagnostic types
+        #    other keys, which should be passed along
+        #    as "default" parameters
+        diags = {k: v for k, v in
+                 self.input_data["Diagnostics"].items()
+                 if Diagnostic.is_valid_name(k)}
+        params = {k: v for k, v in
+                  self.input_data["Diagnostics"].items()
+                  if not Diagnostic.is_valid_name(k)}
 
-            if "directory" not in params:
-                params["directory"] = str(Path("default_output"))
+        if "directory" not in params:
+            params["directory"] = str(Path("default_output"))
 
-            for diag_type, d in diags.items():
-                diagnostic_class = Diagnostic.lookup(diag_type)
-                if not type(d) is list:
-                    d = [d]
-                file_num = 0
-                for di in d:
-                    # Values in di supersede values in params because
-                    # of the order in which these are combined
-                    di = {**params, **di, "type": diag_type}
-                    if "filename" not in di:
-                        # Set a default output filename
-                        file_end = di.get("output_type", "out")
-                        di["filename"] = (f"{diag_type}{file_num}"
-                                          f".{file_end}")
-                        file_num += 1
-                    di["filename"] = str(Path(di["directory"])
-                                         / Path(di["filename"]))
-                    self.diagnostics.append(
-                        diagnostic_class(owner=self, input_data=di))
+        for diag_type, d in diags.items():
+            diagnostic_class = Diagnostic.lookup(diag_type)
+            if type(d) is not list:
+                d = [d]
+            file_num = 0
+            for di in d:
+                # Values in di supersede values in params because
+                # of the order in which these are combined
+                di = {**params, **di, "type": diag_type}
+                if "filename" not in di:
+                    # Set a default output filename
+                    file_end = di.get("output_type", "out")
+                    di["filename"] = (f"{diag_type}{file_num}"
+                                      f".{file_end}")
+                    file_num += 1
+                di["filename"] = str(Path(di["directory"])
+                                     / Path(di["filename"]))
+                self.diagnostics.append(
+                    diagnostic_class(owner=self, input_data=di))
 
     def sort_modules(self):
         """Sort :class:`Simulation.physics_modules` by some logic
@@ -410,7 +411,7 @@ class PhysicsModule(DynamicFactory):
         resource : `dict`
             resource dictionary to be shared
         """
-        for k in resource.keys():
+        for k in resource:
             print(f"Module {self.__class__.__name__} is sharing {k}")
         for physics_module in self._owner.physics_modules:
             physics_module.inspect_resource(resource)
@@ -702,7 +703,7 @@ class Grid:
         else:
             self.set_value_from_keys("dr", {"dr", "dx"})
             self.num_points = 1 + (self.r_max - self.r_min) / self.dr
-            if not self.num_points % 1 == 0:
+            if self.num_points % 1 != 0:
                 raise (RuntimeError("Invalid grid spacing: "
                                     "configuration does not imply "
                                     "integer number of grid points"))
@@ -736,8 +737,7 @@ class Grid:
             if name in self._input_data:
                 setattr(self, var_name, self._input_data[name])
                 return
-        raise (KeyError("Grid configuration for " + var_name
-                        + " not found."))
+        raise KeyError((f'Grid configuration for {var_name}' + " not found."))
 
     def set_grid_points(self):
         self.r = (self.r_min + (self.r_max - self.r_min) *
@@ -875,13 +875,17 @@ class Grid:
         self.inverse_interface_volumes = np.zeros_like(self.interface_volumes)
 
         self.interface_volumes[0] = self.cell_volumes[0]
-        self.interface_volumes[1:-1] = 0.5 * (self.cell_volumes[1:]
-                                              + self.cell_volumes[0:-1])
+        self.interface_volumes[1:-1] = 0.5 * (
+            (self.cell_volumes[1:] + self.cell_volumes[:-1])
+        )
+
         self.interface_volumes[-1] = self.cell_volumes[-1]
 
         self.inverse_interface_volumes[0] = self.inverse_cell_volumes[0]
-        self.inverse_interface_volumes[1:-1] = 0.5 * (self.inverse_cell_volumes[1:]
-                                                      + self.inverse_cell_volumes[0:-1])
+        self.inverse_interface_volumes[1:-1] = 0.5 * (
+            (self.inverse_cell_volumes[1:] + self.inverse_cell_volumes[:-1])
+        )
+
         self.inverse_interface_volumes[-1] = self.inverse_cell_volumes[-1]
 
     def __repr__(self):

@@ -35,8 +35,8 @@ class BlockDiagnostic(Diagnostic):
         self.outputter = None
 
     def inspect_resource(self, resource):
-        if "Block:" + self.component in resource:
-            self.data = resource["Block:" + self.component]
+        if f'Block:{self.component}' in resource:
+            self.data = resource[f'Block:{self.component}']
 
     def diagnose(self):
         self.outputter.diagnose(self.data[0, :])
@@ -120,8 +120,7 @@ ComputeTool.register("Leapfrog", Leapfrog)
 
 @pytest.fixture
 def bos_run():
-    # Note: grid isn't used, but "gridless" sims aren't an option yet
-    problem_config = {
+    return {
         "Clock": {"start_time": 0,
                   "end_time": 10,
                   "num_steps": 10},
@@ -150,5 +149,3 @@ def bos_run():
             ]
         }
     }
-
-    return problem_config
