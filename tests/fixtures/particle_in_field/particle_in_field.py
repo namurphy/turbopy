@@ -74,8 +74,8 @@ class ParticleDiagnostic(Diagnostic):
         self.outputter = None
 
     def inspect_resource(self, resource):
-        if "ChargedParticle:" + self.component in resource:
-            self.data = resource["ChargedParticle:" + self.component]
+        if f'ChargedParticle:{self.component}' in resource:
+            self.data = resource[f'ChargedParticle:{self.component}']
     
     def diagnose(self):
         self.outputter.diagnose(self.data[0, :])
@@ -117,7 +117,5 @@ def pif_sim():
 #     Diagnostic.register("FieldPlottingDiagnostic", FieldPlottingDiagnostic)
     ComputeTool.register("ForwardEuler", ForwardEuler)
     input_file = "tests/fixtures/particle_in_field/particle_in_field.toml"
-    sim = construct_simulation_from_toml(input_file)
-    
     # print(sim.input_data['Diagnostics'])
-    return sim
+    return construct_simulation_from_toml(input_file)

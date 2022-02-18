@@ -262,9 +262,7 @@ def test_generate_field(simple_grid):
 
 def test_generate_linear(simple_grid):
     """Test generate_linear method in Grid class"""
-    comp = []
-    for i in range(simple_grid.num_points):
-        comp.append(i/(simple_grid.num_points - 1))
+    comp = [i/(simple_grid.num_points - 1) for i in range(simple_grid.num_points)]
     assert np.allclose(simple_grid.generate_linear(), np.array(comp))
 
 
@@ -285,7 +283,7 @@ def test_set_cartesian_volumes():
                   "coordinate_system": "cartesian"}
     grid2 = Grid(grid_conf2)
     edges = grid2.cell_edges
-    volumes = edges[1:] - edges[0:-1]
+    volumes = edges[1:] - edges[:-1]
     assert grid2.cell_volumes.size == volumes.size
     assert np.allclose(grid2.cell_volumes, volumes)
     # Test edge-centered volumes
@@ -306,7 +304,7 @@ def test_set_cylindrical_volumes():
                   "coordinate_system": "cylindrical"}
     grid2 = Grid(grid_conf2)
     edges = grid2.cell_edges
-    volumes = np.pi*(edges[1:]**2 - edges[0:-1]**2)
+    volumes = np.pi * (edges[1:]**2 - edges[:-1]**2)
     assert grid2.cell_volumes.size == volumes.size
     assert np.allclose(grid2.cell_volumes, volumes)
     # Test edge-centered volumes
@@ -328,7 +326,7 @@ def test_set_spherical_volumes():
                   "coordinate_system": "spherical"}
     grid2 = Grid(grid_conf2)
     edges = grid2.cell_edges
-    volumes = 4/3 * np.pi*(edges[1:]**3 - edges[0:-1]**3)
+    volumes = 4/3 * np.pi * (edges[1:]**3 - edges[:-1]**3)
     assert grid2.cell_volumes.size == volumes.size
     assert np.allclose(grid2.cell_volumes, volumes)
     # Test edge-centered volumes
@@ -413,6 +411,6 @@ def test_is_running():
     clock2 = SimulationClock(Simulation({}), clock_config)
     assert clock2.num_steps == 20
     assert clock2.is_running() and clock2.this_step < clock2.num_steps
-    for i in range(clock2.num_steps):
+    for _ in range(clock2.num_steps):
         clock2.advance()
     assert not clock2.is_running()
